@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>MAT381E-Week 7: Handling factors in data</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Gül İnan" />
+    <meta name="date" content="2021-11-14" />
+    <script src="forcats_files/header-attrs-2.11/header-attrs.js"></script>
+    <link href="forcats_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <script src="forcats_files/fabric-4.3.1/fabric.min.js"></script>
+    <link href="forcats_files/xaringanExtra-scribble-0.0.1/scribble.css" rel="stylesheet" />
+    <script src="forcats_files/xaringanExtra-scribble-0.0.1/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <link href="forcats_files/panelset-0.2.6/panelset.css" rel="stylesheet" />
+    <script src="forcats_files/panelset-0.2.6/panelset.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: left, middle, my-title, title-slide
+
+# MAT381E-Week 7: Handling factors in data
+### Gül İnan
+### Department of Mathematics<br/>Istanbul Technical University
+### November 14, 2021
+
+---
+
+
+
+
+
+
+
+
+
+
+class: left
+
+# Outline
+
+* What is categorical data?
+* Introduction to `forcats` package.
+
+
+---
+
+class: center, middle
+
+# Categorical Data
+
+&lt;img src="images/rating.png" width="60%" height="100%" /&gt;
+
+---
+
+#### Some Basic Terminology
+
+- We have **two types** of data:
+  - **Numerical** (`Quantitative`) data and
+  - **Non-Numerical** (`Qualitative`) data.  
+  
+---
+
+#### Numerical (Quantitative) data
+
+- Takes on **number values**:
+  - **Discrete:** These are integer valued data: 
+      - How old are you? Answer: 25, 34, 45.
+      - How many friends do you have on Facebook? Answer: 50, 100, 400.
+ - **Continuous:** These are numbers that can take on **infinite
+     values** within some range of values. 
+      - What is your monthly income? Answer: 1525.56 TL, 879.45 TL.
+      - What is your weight? Answer: 65.4 kg, 74.64 kg.
+- We can make arithmetic operations on numerical data such as addition, subtraction multiplication, division etc.
+
+---
+#### Non-numerical (Qualitative) data
+- It is also known as **categorical** data since it can take on some number of **distinct categories** such as eye color (brown, blue, green), computer brand (HP, Toshiba, Lenovo) and so on.
+- We therefore typically treat those kinds of non-numerical fields as pure **character** data.
+- However, the categories are generally **limited** and **distinct**, and  we can represent them by **numbers** and each category can be referred as `levels`.
+
+---
+- Categorical data may be **unordered categorical data**, which is also known as **nominal data**.
+- For example, a survey asked Americans their favorite type of pizza:
+
+|Category           |Level Number  | 
+|:------------------|:------------:|
+|NY Thin Crust      |1             |
+|Chicago Deep Dish  |2             |
+|California         |3             |
+
+
+- There are **3** distinct **answers**, where each answer can be considered as one of the levels of pizza type variable.
+---
+- The numbers (**level numbers**) are **basically placeholders** for each category level, and is meant for us to work with it easier in a programming language. 
+- If we get the following responses from 5 participants:
+  - NY Thin Crust, NY Thin Crust, Chicago Deep Dish, Chicago Deep Dish, California
+- Then we can code them as:
+  - 1,1,2,2,3.
+
+---
+#### Create factors
+- We can create a factor in `R`
+using either the `factor()` function, or by reclassifying another vector type using `as.factor()`.
+
+
+```r
+# take the survey responses from previous 
+x &lt;- c(1,1,2,2,3)
+x &lt;- factor(x, levels = c(1, 2, 3), 
+               labels = c("NY Thin Crust", "Chicago Deep Dish","California"))
+                                                        
+x
+```
+
+```
+#&gt; [1] NY Thin Crust     NY Thin Crust     Chicago Deep Dish Chicago Deep Dish
+#&gt; [5] California       
+#&gt; Levels: NY Thin Crust Chicago Deep Dish California
+```
+
+```r
+class(x)
+```
+
+```
+#&gt; [1] "factor"
+```
+
+---
+- **Categorical data** can be ordered, which is also known as **ordinal data**. 
+- For example, we may have a survey question with the following categories:
+
+|Category      |Level Number  | 
+|:-------------|:------------:|
+|Very Unlikely |1             |
+|Unlikely      |2             |
+|Uncertain     |3             |
+|Likely        |4             | 
+|Very Likely   |5             | 
+
+- These are not numerical data, because the _level number_ is merely a placeholder for the category, and we can not do arithmetic on these. 
+- Since there is some order between categories, this is actually an `Ordinal` variable.
+---
+
+
+```r
+#let's say we have the following sample from participants
+x &lt;- c(5, 2, 1, 2, 5, 2, 1, 5, 2, 5, 1, 1, 2)
+x &lt;- factor(x, levels = c(1, 2, 3, 4, 5), 
+               labels = c("Very Unlikely", "Unlikely ", "Uncertain", "Likely", "Very Likely"), 
+               ordered = TRUE)                                        
+           
+x
+```
+
+```
+#&gt;  [1] Very Likely   Unlikely      Very Unlikely Unlikely      Very Likely  
+#&gt;  [6] Unlikely      Very Unlikely Very Likely   Unlikely      Very Likely  
+#&gt; [11] Very Unlikely Very Unlikely Unlikely     
+#&gt; Levels: Very Unlikely &lt; Unlikely  &lt; Uncertain &lt; Likely &lt; Very Likely
+```
+
+---
+
+# Bar Charts
+
+- Bar charts are useful for displaying **frequencies of categorical variables**.
+- Each level of the categoric variable is represented as a **bar**. 
+- The height of the bar represents its frequency. 
+- We can plot a bar plot in `gpplot2` with [geom_bar()](https://ggplot2.tidyverse.org/reference/geom_bar.html) function.  
+
+
+💡 **Do not confound bar chart with histogram**. A histogram has only a numeric variable as input and shows its distribution. 
+
+---
+
+&lt;style type="text/css"&gt;
+.pull-left {
+  float: left;
+  width: 50%;
+}
+.pull-right {
+  float: right;
+  width: 50%;
+}
+&lt;/style&gt;
+
+#### Example: USA Electric Disturbances 
+
+.pull-left[
+&lt;img src="images/texas.png" width="100%" height="100%" /&gt;
+]
+
+
+.pull-right[
+* "... a winter storm led to power outages across the state, leaving millions of Texans in the dark".
+* "The United States suffered 383 “electric disturbance events” in 2020, according to the Department of Energy (DoE), up from 150 in 2017".
+* "Causes range from sabotage and vandalism to fuel-supply problems and earthquakes".
+* **"But according to the DoE’s data, outages are more frequent in spring and autumn, as well as summer and winter, suggesting that more than just weather is behind the recent surge in blackouts (see chart)."**
+]
+
+[Source](https://www.economist.com/graphic-detail/2021/03/01/power-outages-like-the-one-in-texas-are-becoming-more-common-in-america)
+
+---
+#### USA Electric Disturbances Data
+- Monthly electric disturbance data, which motivates the Economist graphic, is available at [US Energy Department](https://www.oe.netl.doe.gov/OE417_annual_summary.aspx) year by year.
+- Due to inconsistent formats in the `.xls` files, we will be working with the data through the years 2016-2020 only.
+- Let's first import data into `R`. 
+
+
+```r
+#import data
+#skip the first row, which is all about table title.
+#the next row is the column name.
+library(readxl)
+electric_data_2016 &lt;- read_excel("data/2016_Annual_Summary.xls", skip=1) 
+electric_data_2017 &lt;- read_excel("data/2017_Annual_Summary.xls", skip=1)
+electric_data_2018 &lt;- read_excel("data/2018_Annual_Summary.xls", skip=1)
+electric_data_2019 &lt;- read_excel("data/2019_Annual_Summary.xls", skip=1)
+electric_data_2020 &lt;- read_excel("data/2020_Annual_Summary.xls", skip=1)
+```
+
+---
+- All spreadsheets are of 
+the same form. We can join these tables row by row by `full_join()` function in `dplyr`:
+
+
+```r
+library(dplyr)
+#bind the rows
+full_disturbance &lt;- 
+             electric_data_2016 %&gt;% 
+             full_join(electric_data_2017) %&gt;% 
+             full_join(electric_data_2018) %&gt;% 
+             full_join(electric_data_2019) %&gt;% 
+             full_join(electric_data_2020) 
+#View(full_disturbance) 
+#str(full_disturbance)
+head(full_disturbance,3)
+```
+
+```
+#&gt; # A tibble: 3 × 12
+#&gt;    Year Month   `Date Event Began` `Time Event Began`  `Date of Restoration`
+#&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;              &lt;dttm&gt;              &lt;chr&gt;                
+#&gt; 1  2016 January 42373              1899-12-31 05:15:00 42374                
+#&gt; 2  2016 January 42379              1899-12-31 20:46:00 42380                
+#&gt; 3  2016 January 42380              1899-12-31 20:16:00 42380                
+#&gt; # … with 7 more variables: Time of Restoration &lt;chr&gt;, Area Affected &lt;chr&gt;,
+#&gt; #   NERC Region &lt;chr&gt;, Alert Criteria &lt;chr&gt;, Event Type &lt;chr&gt;,
+#&gt; #   Demand Loss (MW) &lt;chr&gt;, Number of Customers Affected &lt;chr&gt;
+```
+
+---
+
+- Let's create a new factor column variable called **Season** by categorizing the months into seasons.
+
+
+```r
+disturbance &lt;- 
+             full_disturbance %&gt;% 
+             mutate(Season = case_when(Month %in% c("March", "April", "May") ~ "Spring",
+                                       Month %in% c("June", "July", "August") ~ "Summer",
+                                       Month %in% c("September", "October", "November") ~ "Autumn",
+                                       TRUE ~"Winter")) %&gt;%  # creates a character variable first
+            mutate(Season = factor(Season, levels=c("Winter", "Spring", "Summer", "Autumn"))) %&gt;%  #convert the character variable into a factor. use levels argument now only.
+            relocate(Season, .after = Month) #locate the season variable right after the month variable
+#View(disturbance) 
+```
+
+
+```r
+#Check that season is a factor with four levels.
+str(disturbance)      
+```
+
+```
+#&gt; tibble [1,172 × 13] (S3: tbl_df/tbl/data.frame)
+#&gt;  $ Year                        : num [1:1172] 2016 2016 2016 2016 2016 ...
+#&gt;  $ Month                       : chr [1:1172] "January" "January" "January" "January" ...
+#&gt;  $ Season                      : Factor w/ 4 levels "Winter","Spring",..: 1 1 1 1 1 1 1 1 1 1 ...
+#&gt;  $ Date Event Began            : chr [1:1172] "42373" "42379" "42380" "42383" ...
+#&gt;  $ Time Event Began            : POSIXct[1:1172], format: "1899-12-31 05:15:00" "1899-12-31 20:46:00" ...
+#&gt;  $ Date of Restoration         : chr [1:1172] "42374" "42380" "42380" "42383" ...
+#&gt;  $ Time of Restoration         : chr [1:1172] "0.33333333333333331" "0.22569444444444445" "0.95833333333333337" "0.5" ...
+#&gt;  $ Area Affected               : chr [1:1172] "Wisconsin: Milwaukee County;" "Maine: Connecticut: Massachusetts: Vermont: New Hampshire: Rhode Island:" "Pennsylvania: Chester County;" "Delaware:" ...
+#&gt;  $ NERC Region                 : chr [1:1172] "MRO" "NPCC" "RFC" "RFC" ...
+#&gt;  $ Alert Criteria              : chr [1:1172] "Suspected Physical Attack" "Loss of electric service to more than 50,000 customers for 1 hour or more" "Suspected Physical Attack" "Suspected Physical Attack" ...
+#&gt;  $ Event Type                  : chr [1:1172] "Sabotage" "Weather" "Vandalism" "Vandalism" ...
+#&gt;  $ Demand Loss (MW)            : chr [1:1172] "0" "Unknown" "0" "0" ...
+#&gt;  $ Number of Customers Affected: chr [1:1172] "0" "59859" "0" "0" ...
+```
+
+---
+
+- Let's get the levels of the season variable.
+
+
+```r
+library(dplyr)
+disturbance %&gt;% 
+   #use dplyr::pull which acts like $ to get the variable
+  pull(Season) %&gt;% 
+   #let us get the number placeholder attached to each category
+    levels()
+```
+
+```
+#&gt; [1] "Winter" "Spring" "Summer" "Autumn"
+```
+
+- Notice that `levels` are in the order we defined above!.. 
+
+---
+
+- Let's change the order of levels (do at home). 
+
+
+```r
+disturbance %&gt;% 
+   mutate(Season = factor(Season, levels = c("Spring", "Summer", "Autumn", "Winter"))) %&gt;% 
+   pull(Season) %&gt;% 
+   levels()
+```
+
+```
+#&gt; [1] "Spring" "Summer" "Autumn" "Winter"
+```
+
+```r
+#did not save the data, will not affect the results          
+```
+
+---
+
+- Let's count the number of electric disturbances over the seasons now.
+
+
+```r
+seasonal_disturbance &lt;- disturbance %&gt;% 
+                         count(Season)             
+#View(seasonal_disturbance)
+```
+
+---
+
+- Count the number of electric disturbances in each year by season.
+
+
+```r
+yearly_disturbance &lt;- disturbance %&gt;% 
+                             group_by(Year) %&gt;% 
+                             count(Season)  
+                                
+#View(yearly_disturbance)
+```
+
+---
+#### Make a global theme for all graphics
+
+- We are going to use the same `theme` settings today. So, let's fix them so that we can save some
+space in our codes.
+
+
+
+```r
+library(ggplot2)
+# first select a theme type by theme_set()
+mytheme &lt;- theme_set(theme_minimal()) 
+# then update this theme with additional settings.
+mytheme &lt;- theme_update(panel.grid = element_line(linetype = "solid", size = 0.4),
+                        panel.grid.major.x = element_blank(), 
+                        panel.grid.minor= element_blank(), 
+                        plot.title = element_text(face="bold"), 
+                        plot.caption = element_text(hjust = 0))
+#these theme setting will applied onto all graphics we are going to produce today.
+```
+
+
+---
+.panelset[
+
+.panel[.panel-name[Code]
+- Now get a bar plot of electric disturbances across seasons ignoring the year attribute.
+
+
+```r
+library(ggplot2)
+# get the frequencies by season first.
+# you are preparing your data
+# x must be a factor
+disturbance %&gt;% 
+          count(Season) %&gt;% 
+ggplot(aes(x=Season, y=n)) +
+    geom_bar(stat="identity", fill="#1c4966") +
+  #stat:identity says that y is the raw frequencies.
+  #some data sets may not involve raw frequencies. 
+  #fill: fill-in the bar.
+    scale_y_continuous(limits = c(0, 400)) +
+  #adjust the y-axis limits between 0 and 400.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") 
+```
+]
+
+.panel[.panel-name[Output]
+
+&lt;img src="forcats_files/figure-html/unnamed-chunk-17-1.png" width="50%" /&gt;
+]
+
+]
+
+
+
+---
+#### Side-by-Side (Grouped) Bar Plot
+
+.panelset[
+
+.panel[.panel-name[Code]
+- Now plot the number of electric disturbances by season (level1) per year (level2). This is called as a side-by-side or grouped bar plot:
+
+```r
+disturbance %&gt;% 
+           group_by(Year) %&gt;% 
+            count(Season) %&gt;% 
+ggplot(aes(x=Year, y=n, fill=Season)) +
+    geom_bar(stat="identity", position="dodge") +
+  #position = "dodge": side-by-side
+    scale_y_continuous(limits = c(0,150)) +
+  #adjust the y-axis limits between 0 and 150.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") +
+  #the variable Season is mapped to color fill. With scale_fill_manual we can map each factor
+  #level of Season to different colors.
+     scale_fill_manual(values=c("Winter"="#a32328", "Spring"="#1c4966", "Summer"="#45b6fe", "Autumn"="#d6bcc4"))
+# More info: http://www.cookbook-r.com/Graphs/Legends_(ggplot2)/
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-19-1.png" width="50%" /&gt;
+]
+
+
+
+]
+
+---
+class: center, middle
+
+# Forcats
+![LForcats](logo/forcats.png)  
+
+---
+# forcats package
+
+- The [forcats](https://forcats.tidyverse.org/articles/forcats.html) is an `R` package to provide a suite of tools that solve common problems with categorical data,
+where `forcats` is **for** **cat**egorical data. 
+- First, to be able to use the functionality of `forcats` we have to load the package: 
+
+
+```r
+#library(tidyverse) or
+library(forcats)
+```
+
+- The common functions in the package start with `fct_*()`.
+
+|Function           | Description                                                      |
+|-------------------|------------------------------------------------------------------|
+|`fct_relevel()`    | Changing the order of a factor by hand.                          |
+|`fct_infreq()`     | Reordering a factor by the frequency of values.                  |
+|`fct_rev()`        | Reverse the order of factor levels.                              |
+|`fct_reorder()`    | Reordering a factor by another variable.                         |
+
+---
+
+
+```r
+# In class: for online lecture only. to save time.
+library(ggplot2)
+disturbance %&gt;% 
+* #mutate(Season = fct_relevel(Season, "Spring", "Summer", "Autumn", "Winter")) %&gt;%
+  #first argument is a factor, the rest are labels listed sequentially, not in a vector 
+  #form.
+* #mutate(Season = fct_relevel(Season, sort)) %&gt;%
+  #sorts alphabetically
+* #mutate(Season = fct_infreq(Season)) %&gt;%
+  #decreasing
+* #mutate(Season = fct_rev(fct_infreq(Season))) %&gt;%
+  #increasing
+    count(Season) %&gt;% 
+ggplot(aes(x=Season, y=n)) +
+    geom_bar(stat="identity", fill="#1c4966") +
+  #stat:identity gives the raw frequencies, fill: fill-in the bar.
+    scale_y_continuous(limits = c(0, 400)) +
+  #adjust the y-axis limits between 0 and 400.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") 
+```
+
+
+---
+
+.panelset[
+.panel[.panel-name[Code]
+- Re-visit the bar plot example of electric disturbances across seasons ignoring the year.
+
+```r
+library(ggplot2)
+disturbance %&gt;% 
+    count(Season) %&gt;% 
+ggplot(aes(x=Season, y=n)) +
+    geom_bar(stat="identity", fill="#1c4966") +
+  #stat:identity gives the raw frequencies, fill: fill-in the bar.
+    scale_y_continuous(limits = c(0, 400)) +
+  #adjust the y-axis limits between 0 and 400.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") 
+```
+- Note that the order of season levels appear as defined before.
+- For factors, `ggplot` _generally places visual elements in the order defined by the levels_.
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-23-1.png" width="50%" /&gt;
+]
+
+
+]
+
+
+---
+# fct_relevel()
+
+- We may specify the order ourselves (i.e. manually order the levels) by using `fct_relevel()`.
+- Let's order them such that Spring comes first, then Summer, Autumn, and Winter, respectively.
+---
+
+.panelset[
+.panel[.panel-name[Code]
+
+```r
+library(forcats)
+library(ggplot2)
+disturbance %&gt;% 
+* mutate(Season = fct_relevel(Season, "Spring", "Summer", "Autumn", "Winter")) %&gt;%
+  #first argument is a factor, the rest are labels listed sequentially, not in a vector 
+  #form.
+* #mutate(Season = fct_relevel(Season, sort)) %&gt;%
+  #sorts alphabetically
+  count(Season) %&gt;% 
+ggplot(aes(x=Season, y=n)) +
+    geom_bar(stat="identity", fill="#1c4966") +
+  #stat:identity gives the raw frequencies, fill: fill-in the bar.
+    scale_y_continuous(limits = c(0, 400)) +
+  #adjust the y-axis limits between 0 and 400.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") 
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-25-1.png" width="50%" /&gt;
+]
+
+]
+
+  
+---
+# fct_infreq()
+
+- The `fct_infreq()` orders the levels from most frequent to least frequent.
+
+---
+.panelset[
+.panel[.panel-name[Code]
+
+```r
+library(forcats)
+library(ggplot2)
+disturbance %&gt;% 
+*   mutate(Season = fct_infreq(Season)) %&gt;%
+    #decreasing
+    count(Season) %&gt;% 
+ggplot(aes(x=Season, y=n)) +
+    geom_bar(stat="identity", fill="#1c4966") +
+  #stat:identity gives the raw frequencies, fill: fill-in the bar.
+    scale_y_continuous(limits = c(0, 400)) +
+  #adjust the y-axis limits between 0 and 400.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") 
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-27-1.png" width="50%" /&gt;
+]
+
+]
+  
+---
+# fct_rev()
+
+- The `fct_rev()` reverses the order.
+
+---
+.panelset[
+.panel[.panel-name[Code]
+
+```r
+library(forcats)
+library(ggplot2)
+disturbance %&gt;% 
+* mutate(Season = fct_rev(fct_infreq(Season))) %&gt;%
+   #increasing
+   count(Season) %&gt;% 
+ggplot(aes(x=Season, y=n)) +
+    geom_bar(stat="identity", fill="#1c4966") +
+  #stat:identity gives the raw frequencies, fill: fill-in the bar.
+    scale_y_continuous(limits = c(0, 400)) +
+  #adjust the y-axis limits between 0 and 400.
+    labs(title="Lights out", 
+         subtitle="United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") 
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-29-1.png" width="50%" /&gt;
+]
+
+]
+
+---
+
+# Revisit Economist graphic (At home)
+
+.panelset[
+.panel[.panel-name[Code]
+
+```r
+library(forcats)
+library(ggplot2)
+yearly_disturbance %&gt;% 
+  mutate(Season=fct_relevel(Season, "Spring", "Summer", "Autumn","Winter")) %&gt;% 
+ggplot(aes(x=Year, y=n, fill=Season)) + 
+    geom_bar(stat="identity", position="stack") +
+    #position:"stack": stack the bars
+    labs(title = "Lights out", 
+         subtitle = "United States, reported electric disturbances",
+         y="", x="", 
+         caption="Source: The Department of Energy") +
+    #adjust the legend position. Since we would like to move the legend into figure area, we define vector of coordinates.
+    theme(legend.position = c(.1, .7)) +
+    #move the vertical axis to the right
+    scale_y_continuous(position = "right") +
+    #adjust the tick mark places and their labels accordingly
+    scale_x_continuous(breaks = c(2016, 2017, 2018, 2019, 2020), labels =c("2016", "17", "18", "19", "20")) +
+    #the variable Season is mapped to color fill. With scale_fill_manual we can map each factor
+    #level of Season to different colors.
+    scale_fill_manual(values=c("Spring"="#1c4966", "Summer"="#45b6fe", "Autumn"="#d6bcc4", "Winter"="#a32328"))
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-31-1.png" width="40%" /&gt;
+]
+
+]
+
+---
+#### Example: Homeless Data (At home)
+- Let's focus on [Homeless data](https://ourworldindata.org/homelessness#:~:text=Homelessness%20remains%20an%20important%20policy,in%201%2C670%20Americans%20is%20homeless).
+- We have number of homeless people for several countries in 2013.
+
+
+&lt;img src="images/homeless.png" width="50%" height="100%" /&gt;
+
+---
+- Read the data into `R` first.
+
+```r
+homeless_data &lt;- readr::read_csv("data/number-of-homeless-people-per-100000-population-circa-2013.csv", 
+                            skip=1, col_names = c("Country", "Code", "Homeless_Total"))
+```
+
+```
+#&gt; Rows: 6 Columns: 3
+```
+
+```
+#&gt; ── Column specification ────────────────────────────────────────────────────────
+#&gt; Delimiter: ","
+#&gt; chr (2): Country, Code
+#&gt; dbl (1): Homeless_Total
+```
+
+```
+#&gt; 
+#&gt; ℹ Use `spec()` to retrieve the full column specification for this data.
+#&gt; ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```r
+#convert country into a factor with country levels.
+homeless_data &lt;- homeless_data %&gt;%
+   mutate(Country = factor(Country, levels=c("Chile","France","Ireland","Portugal","Spain","United States"))) 
+#View(homeless_data)
+#str(homeless_data)
+```
+
+---
+
+.panelset[
+.panel[.panel-name[Code]
+
+```r
+homeless_data %&gt;%  
+  mutate(Country = fct_reorder(Country, Homeless_Total)) %&gt;% 
+  #fct_reorder: increasing
+   ggplot(aes(x=Country, y=Homeless_Total)) + 
+   geom_bar(stat = "identity", fill="#52708a") +
+   labs(title = "Number of homeless people (per 100,000 population), circa 2013", 
+       subtitle = "Estimated number of homeless individuals, per 100,000 people in the total population. All of the included\ncountries employ a similar definition of homelessness. See source for details regarding estimate dates and
+definitions.", 
+caption="Source:Homeless and Precarious Housing-OECD (2016)",
+       x = "",    y = "") +
+  theme_minimal() +
+     theme(panel.grid.major= element_blank(), 
+           panel.grid = element_line(linetype = "dashed", size = 0.7),
+           plot.title = element_text(size = 14), 
+           plot.subtitle = element_text(size = 9),
+           plot.caption = element_text(hjust = -.25),
+           axis.text.y = element_text(hjust = 1.4)) + 
+  #align the plot horizontally
+  coord_flip() +
+  #note that coord_flip sorts data according to levels (from bottom to top).
+  #combined with fct_reorder + coord_flip: sort from decreasing to increasing, places the lowest
+  #value to bottom, the highest value to the top.
+  geom_text(aes(label=round(Homeless_Total,2)), hjust= -0.2)
+ #a few more adjustments needed!..
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="forcats_files/figure-html/unnamed-chunk-35-1.png" width="50%" /&gt;
+]
+
+]
+
+
+
+---
+
+- More example on `forcats` package available at:
+  - [Wikelab](https://wilkelab.org/SDS375/slides/getting-things-in-order.html#28).
+  - [Forcats](https://wrangle-r.rsquaredacademy.com/forcats.html).
+
+
+---
+# Attributions
+
+- This lecture note is partially developed by following sources:
+   - [McMasterl](https://github.com/sciencificity/forcats-tutorial/blob/master/forcats_tutorial.Rmd).
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="assets/remark-zoom.js"></script>
+<script src="https://platform.twitter.com/widgets.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9",
+"navigation": {
+"scroll": false
+}
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

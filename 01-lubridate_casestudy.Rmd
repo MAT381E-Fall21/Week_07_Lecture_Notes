@@ -1,0 +1,241 @@
+---
+title: "Week 7: Example for dealing with dates in data"
+---
+
+# Claimer:
+# This case study is taken from
+# https://github.com/MeganBeckett/lubridate-heatmaps_tutorial and
+# https://github.com/MeganBeckett/lubridate-heatmaps_tutorial/blob/master/code/running_casestudy.Rmd
+# has been modified as needed.
+
+---
+
+# Introduction
+
+This case follows on from investigating the lubridate package within 
+the tidyverse and putting some of the features into practice 
+by looking at running activity data over time.
+
+We are interested to investigate some ways of plotting running activities 
+over time. The data is a CSV export from Garmin Connect (https://connect.garmin.com/).
+
+# Load packages needed
+
+```{r message=FALSE, warning=FALSE}
+# I am going to use several packages from tidyverse
+# library(readr)
+# library(dplyr)
+# library(lubridate)
+# library(ggplot2)
+library(tidyverse)
+```
+
+# Read in data
+
+```{r}
+#When I use read_csv() function, I run into a problem with column names involving spaces.
+#unfortunately, i could not solve this problem.
+activities <- read_csv("data/Activities.csv")
+View(activities)
+```
+
+```{r}
+#not sure what is going on. but used this.
+#https://community.rstudio.com/t/handling-column-names-from-df-with-spaces/58082/3
+activities <- as_tibble(activities, .name_repair = "universal")
+View(activities)
+```
+
+# Initial view of data
+
+```{r}
+dim(activities)
+str(activities)
+```
+
+## Tidy up data
+## Extract variables of interest
+
+Many of the columns are empty, so let's create a smaller subset of those we are interested in.
+Select the activity type, date and distance.
+Convert Activity.Type to factor to see if there is more than one level.
+Subset again to only look at data since the beginning of 2015
+
+```{r}
+#Create subset of variables
+running_15 <- activities %>% 
+              select(Activity.Type, Date, Distance) %>%                
+              #Convert activity type to a factor
+              mutate(Activity.Type = as.factor(Activity.Type)) %>% 
+              filter(Date >= "2015-01-01")
+str(running_15)
+```
+
+See levels explicitly
+
+```{r}
+running_15 %>% 
+   pull("Activity.Type") %>% 
+   levels()
+```
+
+########################################
+### In the lecture start from here   ###
+########################################
+
+```{r}
+View(running_15)
+```
+
+
+# Create new variables
+
+Extract year, month, week, wday, hour components first,
+then create new variables based on this.
+Convert wday into a factor.
+
+```{r}
+running_long <- running_15 %>% 
+                  mutate(year = year(Date), 
+                         month = month(Date, label = TRUE, abbr = FALSE), #abbr=TRUE gives three-letter abb.
+                         week = week(Date), 
+                         wday = wday(Date, label = TRUE, abbr = FALSE, week_start = 1),
+#label=TRUE:TRUE will display the day of the week as an "ordered factor" of character strings, such as "Sunday." 
+#day on which week starts following ISO conventions - 1 means Monday, 7 means Sunday (default). 
+#When label = TRUE, this #will be the first level of the returned factor.                          
+                         hour = hour(Date))
+str(running_long)  
+```  
+
+  
+```{r}
+running_long <- running_15 %>% 
+                  mutate(year = year(Date), 
+                         month = month(Date, label = TRUE, abbr = FALSE), #abbr=TRUE gives three-letter abb.
+                         week = week(Date), 
+                         wday = wday(Date, label = TRUE, abbr = FALSE, week_start = 1),
+                         hour = hour(Date)) %>% 
+#week_start	
+#day on which week starts following ISO conventions - 1 means Monday
+#turn ordered factor into a regular factor for compatibility in the following codes.
+                  mutate(wday = factor(wday,
+                         levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+                         ordered = FALSE))
+
+```
+
+
+```{r}
+str(running_long)
+```
+
+# Exploratory visualisation
+
+# Heatmap
+
+We will build heatmaps using the geom_tile() layer in R ggplot2.
+Input data must be a "long format" where each row provides an observation. 
+At least 3 variables are needed per observation:
+x: position on the X axis
+y: position on the Y axis
+fill: the numeric value that will be mapped to the color
+
+
+## Weekly pattern - most popular times to run during the days of the week
+
+We would like to see the most popular times to run during the days of the week
+so 
+x: hour, 
+y: day of the week, 
+fill: number of runs
+
+
+```{r}
+# Create a complete grid to include all possible combinations of weekday and hour even if no data
+hour <- c(0:23)  #x-axis
+week <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday", "Sunday") #y-axis
+grid <- expand.grid(week, hour) 
+
+#dim(grid): rows: 7*24=168 by 2
+```
+
+```{r}
+# Group by week day, then hour and summarise by counting number of activities per group
+heatmap_runs <- running_long %>%
+                 group_by(wday, hour) %>%
+                  summarise(no_runs = n())
+#dim(heatmap_runs):75  3
+```
+
+
+```{r}
+# Join grid and heatmap_runs
+# If you don't do this, the heatmap won't show the full week, and have blank tiles for missing values instead of rather showing 0 runs/activity
+heatmap_runs_full <- heatmap_runs %>%
+                      right_join(grid, 
+                                 by = c("wday"="Var1", "hour"="Var2")) %>% 
+                      arrange(wday,hour)  
+
+# right_join: includes all rows in grid data frame, takes the corresponding
+# no runs from heatmap_runs data frame.
+# dim(heatmap_runs_full): 168 x 3 
+```
+
+```{r}
+#Only 75 out 168 will be filled in.
+#Replace NA with 0 so that ggplot2 can handle (?)
+heatmap_runs_full[is.na(heatmap_runs_full)] <- 0
+
+#did not work. any help?
+#heatmap_runs_full <- heatmap_runs_full %>% 
+#                    mutate(no_runs = replace_na(no_runs, 0))
+```
+
+
+```{r}
+# Plot heatmap using ggplot
+heatmap_runs_full %>% 
+ggplot(aes(x=hour, y=wday, fill=no_runs)) +
+      geom_tile() +
+      scale_fill_gradient(name = "No. of runs", low = "white", high = "blue") +
+      #scale_fill_gradientn: creates a n-colour gradient from low to high. 
+      scale_x_continuous(breaks = seq(0,23,1)) + 
+      ggtitle("Heatmap showing weekly activity pattern") +
+      xlab("Hour") +
+      ylab("Week day") +
+      theme_bw()
+```
+
+```{r}
+#https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3
+# Using ColorBrewer to generate palette
+#install RcolorBrewer packages first
+library(RColorBrewer)
+display.brewer.all()
+```
+
+```{r}
+#pick 100 hundred different colors, list from light to dark. n=9 is fixed. number of different colors.
+pal <- colorRampPalette(brewer.pal(9, "YlOrRd"))(100)
+```
+
+```{r}
+heatmap_runs_full %>% 
+ggplot(aes(x=hour, y=wday, fill=no_runs)) +
+       geom_tile() +
+       scale_fill_gradientn(name = "No. of runs", colours=c("white", pal)) +
+       #colours, colors	Vector of colours to use for n-colour gradient.
+       scale_x_continuous(breaks = seq(0,23,1)) + 
+       ggtitle("Heatmap showing weekly activity pattern") +
+       xlab("Hour") +
+       ylab("Week day") +
+       theme_bw()
+```
+
+#Save the last plot
+
+```{r}
+# Save plot
+ggsave("heatmap_weekly_counts.png", width = 10, height = 7)
+```
+

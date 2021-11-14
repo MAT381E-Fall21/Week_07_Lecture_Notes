@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>MAT381E-Week 7: Handling dates in data</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Gül İnan" />
+    <meta name="date" content="2021-11-14" />
+    <script src="lubridate_files/header-attrs-2.11/header-attrs.js"></script>
+    <link href="lubridate_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <script src="lubridate_files/fabric-4.3.1/fabric.min.js"></script>
+    <link href="lubridate_files/xaringanExtra-scribble-0.0.1/scribble.css" rel="stylesheet" />
+    <script src="lubridate_files/xaringanExtra-scribble-0.0.1/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <link href="lubridate_files/tile-view-0.2.6/tile-view.css" rel="stylesheet" />
+    <script src="lubridate_files/tile-view-0.2.6/tile-view.js"></script>
+    <link href="lubridate_files/animate.css-3.7.2/animate.xaringan.css" rel="stylesheet" />
+    <link href="lubridate_files/tachyons-4.12.0/tachyons.min.css" rel="stylesheet" />
+    <link href="lubridate_files/panelset-0.2.6/panelset.css" rel="stylesheet" />
+    <script src="lubridate_files/panelset-0.2.6/panelset.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: left, middle, my-title, title-slide
+
+# MAT381E-Week 7: Handling dates in data
+### Gül İnan
+### Department of Mathematics<br/>Istanbul Technical University
+### November 14, 2021
+
+---
+
+
+
+
+
+
+
+
+
+
+
+class: left
+
+# Outline
+
+* Introduction to `lubridate` package.  
+  *01-lubridate_casestudy.Rmd
+  
+---
+
+# Overview
+
+- Up to now, we have dealt with: numeric, character, logical, and factor type of vectors. 
+- In data science projects, we may encounter variables that are **dates** and **times**. 
+- **Dates** and **times** can be used to quantify when exactly a certain event occurs and can help us understand chronological relationships. 
+
+---
+class: middle, center
+
+#### What do you see in this graphic?
+
+&lt;img src="images/gtrend.png" width="80%" height="100%" /&gt;
+
+---
+
+#### Date-time functions/classes
+
+- Luckily, `R` provides several options for dealing with **date** and **date/time** data. 
+- Just as numbers and strings have their own class in `R`, **date** and **date/time** objects have their own class too. 
+- In base `R`, the built-in `as.Date()` function with `Date` class handles dates (without times);  and the `as.POSIXct()` function with `POSIXct` class and `as.POSIXlt()` function with `POSIXlt` class allow for dates and times with control for **time zones**. 
+
+|Type           |Function      |Class     | Description                                         |
+|:--------------|:-------------|:---------|:----------------------------------------------------|
+|date           |`as.Date()`   |`Date`    | represent calendar dates.                           |
+|date-time      |`as.POSIXct()`|`POSIXct` | stores seconds since epoch (since `January 1, 1970`).|
+|date-time      |`as.POSIXlt()`|`POSIXlt` | stores a list of day, month, year, hour, minute, second, etc.|
+
+- Note: POSIX stands for `Portable Operating System Interface` and it is a family of standards specified by the `IEEE Computer Society` for maintaining compatibility between different operating systems. 
+- The POSIX classes are especially useful when time zone manipulation is important. 
+- `ct` stands for calendar time. 
+
+---
+- Computer languages usually use `January 1, 1970`
+as the _epoch_ which is an origin (reference) day so that the dates can be converted to numbers. Dates older than the origin are stored as negative integers.
+- Similarly, in `R`, except for the `POSIXlt` class, dates are stored internally as the number of days or seconds from `January 1, 1970`. 
+- The `POSIXlt` class stores date/time values as a list of components (day, month, year, etc.) making it easy to extract these parts.
+-  Unless you need the list nature of the `POSIXlt` class, the `POSIXct` class is the usual choice for storing dates in `R`.
+
+---
+
+- Let's get the current system date and time.
+
+
+```r
+# get system date
+Sys.Date()
+```
+
+```
+#&gt; [1] "2021-11-14"
+```
+
+
+```r
+# check the class
+class(Sys.Date())
+```
+
+```
+#&gt; [1] "Date"
+```
+
+
+```r
+# get the system time
+Sys.time()
+```
+
+```
+#&gt; [1] "2021-11-14 18:20:14 +03"
+```
+
+
+```r
+# check the class
+class(Sys.time())
+```
+
+```
+#&gt; [1] "POSIXct" "POSIXt"
+```
+
+---
+class: middle, center
+
+&lt;img src="images/date.jpeg" width="60%" /&gt;
+
+---
+
+&lt;style type="text/css"&gt;
+.pull-left {
+  float: left;
+  width: 50%;
+}
+.pull-right {
+  float: right;
+  width: 50%;
+}
+&lt;/style&gt;
+
+#### Date format
+
+.pull-left[
+- There are **many ways** to write a date and date formats vary **across the world**. 
+- Having **different formats** could be confusing for people that come from different countries to understand. 
+- The [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) recommends writing the date as year, then month, then the day: `YYYY-MM-DD` and uses the 24 hour clock system.
+- This default format used in `R` is also the `ISO 8601 standard` for date/time. 
+
+
+```r
+Sys.time()
+```
+
+```
+#&gt; [1] "2021-11-14 18:20:14 +03"
+```
+
+]
+
+
+.pull-right[
+&lt;img src="images/iso.png" width="100%" height="100%" /&gt;
+]
+
+---
+- We can create date objects through `as.Date()` function in base `R`.
+
+```r
+#check
+class(2021-10-04)
+```
+
+```
+#&gt; [1] "numeric"
+```
+
+```r
+class("2021-10-04")
+```
+
+```
+#&gt; [1] "character"
+```
+
+```r
+#create a data object in base R
+school_start_date &lt;- as.Date("2021-10-04")
+class(school_start_date)
+```
+
+```
+#&gt; [1] "Date"
+```
+
+```r
+#number of days since 1970-01-01
+unclass(school_start_date)
+```
+
+```
+#&gt; [1] 18904
+```
+
+
+```r
+#How long has been since the school started?
+Sys.Date()-school_start_date
+```
+
+```
+#&gt; Time difference of 41 days
+```
+
+---
+- Many of the statistical summary functions, like mean, min, max, etc are able to transparently handle date objects. 
+
+
+```r
+important_dates &lt;- as.Date(c("2021-11-01","2021-10-01","2021-09-01"))
+important_dates
+```
+
+```
+#&gt; [1] "2021-11-01" "2021-10-01" "2021-09-01"
+```
+
+
+```r
+min(important_dates)
+```
+
+```
+#&gt; [1] "2021-09-01"
+```
+
+```r
+max(important_dates)
+```
+
+```
+#&gt; [1] "2021-11-01"
+```
+
+- The `by=argument` to the `seq()` function can be specified in any units of time that the function accepts, making it very easy to generate sequences of dates. 
+
+
+```r
+seq(from=as.Date('2021-10-04'), to=as.Date('2022-01-01'), by='10 days') #1 day, 10 days, 2 weeks, 3 months
+```
+
+```
+#&gt; [1] "2021-10-04" "2021-10-14" "2021-10-24" "2021-11-03" "2021-11-13"
+#&gt; [6] "2021-11-23" "2021-12-03" "2021-12-13" "2021-12-23"
+```
+
+- where unit of time in `by` argument can be: "secs", "mins", "hours", "days", "weeks", and "months".
+---
+
+- The `as.Date()` function allows a variety of **input formats** through the `format` input argument. 
+
+| Code | Value         |
+|:-----|:--------------|
+| %d	 | Day of the month (decimal number)|
+| %m	 | Month (decimal number)|
+| %b	 | Month (abbreviated)|
+| %B	 | Month (full name)|
+| %y	 | Year (2 digit)|
+| %Y	 | Year (4 digit)|
+
+
+```r
+#convert it into a data object with YYYY-MM-DD 
+#format argument tells the input structure, output is always in YYYY-MM-DD
+as.Date('15-11-2021', format = '%d-%m-%Y')
+```
+
+```
+#&gt; [1] "2021-11-15"
+```
+
+
+```r
+#convert it into a data object with YYYY-MM-DD 
+#format argument tells the input structure, output is always in YYYY-MM-DD
+as.Date('November 15, 2021', format='%B %d, %Y')
+```
+
+```
+#&gt; [1] "2021-11-15"
+```
+
+---
+- You can also change the format of the date into another date form through `format()` function.
+
+
+```r
+Sys.Date()
+```
+
+```
+#&gt; [1] "2021-11-14"
+```
+
+```r
+format(Sys.Date(), '%B %d, %Y')
+```
+
+```
+#&gt; [1] "November 14, 2021"
+```
+
+- See YAML part of my slides!..
+
+
+```r
+---
+title: "MAT381E-Week 7: Handling dates in data"
+subtitle: ""
+author: "Gül İnan"
+institute: "Department of Mathematics&lt;br/&gt;Istanbul Technical University"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+---
+```
+
+---
+- The default input format for `POSIX` dates consists of the year, followed by the month and day, separated by dashes; for date/time values, the date may be followed by **white space** and a time in the form `hour:minutes:seconds` or `hour:minutes`; thus, the following are examples of valid `POSIX` date or date/time objects:
+
+
+
+```r
+#create POSIX objects
+#no need format argument since it is already in YYYY-MM-DD format
+release_date &lt;- as.POSIXct("2019-12-12")
+release_date
+```
+
+```
+#&gt; [1] "2019-12-12 +03"
+```
+
+```r
+class(release_date)
+```
+
+```
+#&gt; [1] "POSIXct" "POSIXt"
+```
+
+```r
+unclass(release_date) 
+```
+
+```
+#&gt; [1] 1576098000
+#&gt; attr(,"tzone")
+#&gt; [1] ""
+```
+
+
+```r
+#create POSIX objects
+release_date &lt;- as.POSIXct("2019-12-12 08:05:03")
+class(release_date)
+```
+
+```
+#&gt; [1] "POSIXct" "POSIXt"
+```
+
+```r
+release_date
+```
+
+```
+#&gt; [1] "2019-12-12 08:05:03 +03"
+```
+
+---
+
+
+```r
+#create POSIX objects
+release_date &lt;- as.POSIXlt("2019-12-12 08:05:03")
+class(release_date)
+```
+
+```
+#&gt; [1] "POSIXlt" "POSIXt"
+```
+
+```r
+release_date
+```
+
+```
+#&gt; [1] "2019-12-12 08:05:03 +03"
+```
+
+```r
+release_date$hour #you can get the components
+```
+
+```
+#&gt; [1] 8
+```
+
+---
+
+- Use:
+ - `Date` when there is no time component,
+ - `POSIXct` when dealing with time and time zones, and
+ - `POSIXlt` when you want to access/extract the different components.
+ 
+---
+
+#### Example: Google Trends results of İTÜ
+- I imported _Google Trend Search_ results for İTÜ between January 1, 2021 and November 1, 2021 via  [gtrendsR](https://cran.r-project.org/web/packages/gtrendsR/) package. Note that my query results are very limited and restricted to Turkey location only.
+
+.panelset[
+.panel[.panel-name[Data]
+
+
+
+```r
+google_trends &lt;- readr::read_csv("data/google_trends_itu.csv")
+head(google_trends, 3)
+```
+
+```
+#&gt; # A tibble: 3 × 2
+#&gt;   date       İTÜ_TR
+#&gt;   &lt;date&gt;      &lt;dbl&gt;
+#&gt; 1 2021-01-03     39
+#&gt; 2 2021-01-10     42
+#&gt; 3 2021-01-17     39
+```
+
+- The variable `date` in `google.trends` data looks like a character. But, actually, it is `date`:
+
+
+```r
+library(tidyverse)
+google_trends %&gt;% 
+  str()
+```
+
+```
+#&gt; spec_tbl_df [44 × 2] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+#&gt;  $ date  : Date[1:44], format: "2021-01-03" "2021-01-10" ...
+#&gt;  $ İTÜ_TR: num [1:44] 39 42 39 43 42 49 56 69 58 37 ...
+#&gt;  - attr(*, "spec")=
+#&gt;   .. cols(
+#&gt;   ..   date = col_date(format = ""),
+#&gt;   ..   İTÜ_TR = col_double()
+#&gt;   .. )
+#&gt;  - attr(*, "problems")=&lt;externalptr&gt;
+```
+
+```r
+class(google_trends$date)
+```
+
+```
+#&gt; [1] "Date"
+```
+
+]
+
+.panel[.panel-name[Code]
+
+
+```r
+ggplot2::ggplot(data = google_trends) +
+      geom_line(aes(x = date, y = İTÜ_TR)) +
+      scale_x_date(limits = as.Date(c("2021-01-01","2021-11-01")), 
+                  date_breaks = "1 month" )+
+      geom_vline(aes(xintercept = as.Date("2021-10-03")), color="red") +
+      ggtitle("Google Trends search results for İTÜ in 2021") +
+      ylab("Number of Searches") +
+      xlab("Date") +
+      theme_bw() 
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="lubridate_files/figure-html/unnamed-chunk-27-1.png" width="40%" /&gt;
+]
+
+]
+
+---
+- Plotting functions in `ggplot2` are aware of dates which means that, for example, a scatter plot can use the **numeric representation** 
+to decide on the position of the point, but include the **string in the labels** via `scale_*_date()` function:
+
+.panelset[
+.panel[.panel-name[Code]
+
+```r
+library(ggplot2)
+ggplot(data = google_trends) +
+      geom_line(aes(x = date, y = İTÜ_TR)) +
+*     scale_x_date(limits = as.Date(c("2021-01-01","2021-11-01")),
+*                  date_breaks = "1 month", date_labels = "%b-%d") +
+      geom_vline(aes(xintercept = as.Date("2021-10-03")), color="red") +
+      ggtitle("Google Trends search results for İTÜ in 2021") +
+      ylab("Number of Searches") +
+      xlab("Date") +
+      theme_bw() 
+#more: https://www.statworx.com/at/blog/customizing-time-and-date-scales-in-ggplot2/
+```
+]
+
+.panel[.panel-name[Output]
+&lt;img src="lubridate_files/figure-html/unnamed-chunk-29-1.png" width="40%" /&gt;
+]
+
+]
+
+
+---
+
+class: middle, center
+
+![Lubridate](logo/lubridate.jpg)   
+
+---
+# lubridate package
+
+- The `tidyverse ecosystem` includes [lubridate](https://lubridate.tidyverse.org/) package for dealing with **date-times** and **time-spans**.  
+- It is fast and user friendly helping with:
+   - Parsing of date-time data,
+   - Extraction and updating of components of a date-time, and
+   - Algebraic manipulation on date-time and time-span objects.
+
+- First, to be able to use the functionality of `lubridate` we have to load the package: 
+
+
+```r
+# The easiest way to get lubridate is to load the whole tidyverse:
+# library(tidyverse) or
+# Alternatively, load just lubridate:
+library(lubridate)
+```
+
+
+
+
+---
+#### Parsing dates and times (Converting strings or numbers to date-times)
+- The `lubridate` package has a number of functions to convert **strings** to  **date** and **date-time** objects.
+- Here, we simply try to **match the characters to the pattern of the date-time** we are trying to parse.
+- The goal is to end up with a date-time in the form: `YYYY-MM-DD HH:MM:SS`.
+- For parsing the date, in `lubridate` we can use a combination of the letters ‘d’, ‘m’, ‘y’ (standing for day, month, year). 
+- Use the functions below whose name replicates the order.
+
+|Function  |Description                                | 
+|----------|-------------------------------------------|
+|`ymd()`   |converts characters into YYYY-MM-DD format.|
+|`ydm()`   |converts characters into YYYY-MM-DD format.|
+|`mdy()`   |converts characters into YYYY-MM-DD format.| 
+|`dmy()`   |converts characters into YYYY-MM-DD format.|
+|`hms()`   |converts characters into HH:MM:SS format.  |
+|`hm()`    |converts characters into HH:MM format.     |
+|`h()`     |converts characters into HH format.        |
+
+---
+
+
+```r
+# When is International Women's day?
+library(lubridate)
+#pattern is year, month, day
+ymd("20210308")
+```
+
+```
+#&gt; [1] "2021-03-08"
+```
+
+```r
+#pattern is year, day, month
+ydm("20210803")
+```
+
+```
+#&gt; [1] "2021-03-08"
+```
+
+```r
+#pattern is month, day, year
+mdy("03-08-2021")
+```
+
+```
+#&gt; [1] "2021-03-08"
+```
+
+```r
+#pattern is day, month, year
+dmy("08/03/2021")
+```
+
+```
+#&gt; [1] "2021-03-08"
+```
+
+```r
+#all of them are converted to the YYYY-MM-DD format.
+```
+
+---
+
+```r
+#if we thing that these strings are in year-month-day format,
+#then put all of them in a standard year-month-day format.
+x &lt;- c(20090101, "2009-01-02", "2009 01 03", "2009-1-4",
+       "2009-1, 5", "Created on 2009 1 6", "200901 !!! 07")
+ymd(x)
+```
+
+```
+#&gt; [1] "2009-01-01" "2009-01-02" "2009-01-03" "2009-01-04" "2009-01-05"
+#&gt; [6] "2009-01-06" "2009-01-07"
+```
+
+---
+- A very similar technique can be used to parse times:
+
+
+```r
+#there is no other functions such as smh() etc.
+#other versions are hm(), h()
+hms("20:30:10")
+```
+
+```
+#&gt; [1] "20H 30M 10S"
+```
+
+- Now if we come across a variable that includes a date and time we can join relevant functions together with an ‘_’ to parse a date-time.
+
+
+```r
+ymd_hms("2006/03/19 20:30:10")
+```
+
+```
+#&gt; [1] "2006-03-19 20:30:10 UTC"
+```
+
+```r
+ydm_hms("2006/19/03 20:30:10")
+```
+
+```
+#&gt; [1] "2006-03-19 20:30:10 UTC"
+```
+
+```r
+mdy_hms("03/19/2006 20:30:10")
+```
+
+```
+#&gt; [1] "2006-03-19 20:30:10 UTC"
+```
+
+```r
+dmy_hms("19/03/2006 20:30:10")
+```
+
+```
+#&gt; [1] "2006-03-19 20:30:10 UTC"
+```
+
+```r
+#all of them are converted to the YYYY-MM-DD hh:mm:ss format.
+```
+
+- The phrase **Coordinated Universal Time (UTC)** in the output represents the time-zone and by default should be UTC, this stands for universal time coordinated.
+
+---
+#### GET components of date-times
+
+- We can use helper functions to get a relevant component in `data-time` objects.
+
+|Function         |Description        | 
+|-----------------|-------------------|
+|`date()`         |Date component     | 
+|`year()`         |Year component     | 
+|`month(, label)` |Month component    | 
+|`day()`          |Day of month       | 
+|`week()`         |Week of the year   |
+|`wday(, label)`  |Day of week        |
+|`yday()`         |Day of year        |
+|`hour()`         |Hour               |
+|`minute()`       |Minute             |
+|`second()`       |Second             |
+
+---
+
+
+```r
+womensday &lt;- ymd("2021/03/08")
+#replaces "/" with "-".
+year(womensday)
+```
+
+```
+#&gt; [1] 2021
+```
+
+```r
+month(womensday)
+```
+
+```
+#&gt; [1] 3
+```
+
+```r
+week(womensday)
+```
+
+```
+#&gt; [1] 10
+```
+
+```r
+#note that Sunday is accepted as the first day of the week
+wday(womensday)
+```
+
+```
+#&gt; [1] 2
+```
+
+```r
+wday(womensday, label=TRUE)
+```
+
+```
+#&gt; [1] Mon
+#&gt; Levels: Sun &lt; Mon &lt; Tue &lt; Wed &lt; Thu &lt; Fri &lt; Sat
+```
+
+```r
+yday(womensday)
+```
+
+```
+#&gt; [1] 67
+```
+
+---
+#### SET components of date-time
+- `lubridate` can be used to not only extract but also **change** parts of date-time objects.
+
+
+```r
+month(womensday) &lt;- 12
+womensday
+
+second(womensday) &lt;- 99
+womensday
+
+# Use update function to change multiple values
+womensday_up &lt;- update(womensday, year = 1976, day = 16, month = 6, hour = 8)
+womensday_up 
+```
+
+---
+- In `R`, we can get the current time by typing `Sys.time()`. 
+
+
+```r
+Sys.time()
+```
+
+```
+#&gt; [1] "2021-11-14 18:20:17 +03"
+```
+
+```r
+class(Sys.time())
+```
+
+```
+#&gt; [1] "POSIXct" "POSIXt"
+```
+
+- The `lubridate` package provides a slightly more advanced function, `now`, that permits you define the time zone:
+
+
+```r
+now()
+```
+
+```
+#&gt; [1] "2021-11-14 18:20:17 +03"
+```
+
+```r
+#time in Turkey now
+now("Turkey")
+```
+
+```
+#&gt; [1] "2021-11-14 18:20:17 +03"
+```
+
+```r
+#time in US-Eastern cost now
+now("US/Eastern")
+```
+
+```
+#&gt; [1] "2021-11-14 10:20:17 EST"
+```
+
+- You can see all the available times zones with the `OlsonNames()` function.
+
+---
+
+- The `lubridate` also has a function to extract hours, minutes and seconds:
+
+
+```r
+now() %&gt;% hour()
+```
+
+```
+#&gt; [1] 18
+```
+
+```r
+now() %&gt;% minute()
+```
+
+```
+#&gt; [1] 20
+```
+
+```r
+now() %&gt;% second()
+```
+
+```
+#&gt; [1] 17.84773
+```
+
+
+---
+
+- **Hands-on example:** Visit `01-lubridate_casestudy.Rmd` file.
+
+&lt;img src="images/garmin.png" width="80%" height="100%" /&gt;
+---
+class: middle, center
+
+
+```
+#&gt; 🌖🌖🌖🌖🌗🌗🌗🌗🌘🌘🌘🌑🌑🌑🌑🌒🌒🌒🌒🌓🌓🌓🌔🌔🌔🌔🌕🌕🌕🌕
+```
+
+
+---
+
+- More at:
+  - [Scale_date](https://ggplot2.tidyverse.org/reference/scale_date.html)
+  - [Lubridate](https://rstudio-pubs-static.s3.amazonaws.com/422499_dcc2ed60c639458ba349b21e22059ac9.html#chapter-2---parsing-dates-with-lubridate).
+  - [Dates and Times in R](https://www.stat.berkeley.edu/~s133/dates.html#:~:text=Dates%20stored%20in%20the%20POSIX,more%20accurate%20representation%20of%20times).
+  - [Missing Dates](https://blog.exploratory.io/populating-missing-dates-with-complete-and-fill-functions-in-r-and-exploratory-79f2a321e6b5).
+  - [Lubridate](https://wrangle-r.rsquaredacademy.com/lubridate.html).
+ 
+---
+
+# Attributions
+- All images used in this slide are taken from the web.
+- This lecture note is mainly developed by following sources:
+   - [Source 1](https://github.com/datasciencelabs/2020/blob/master/03_wrangling/05_dates-and-times.Rmd),
+   - [Source 2](https://eddatascienceees.github.io/tutorial-sian-phillips/), and
+   - [Source 3](https://github.com/MeganBeckett/lubridate-heatmaps_tutorial/blob/master/code/lubridate_tutorial.Rmd).
+   
+   
+
+ 
+   
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="assets/remark-zoom.js"></script>
+<script src="https://platform.twitter.com/widgets.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9",
+"navigation": {
+"scroll": false
+}
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
