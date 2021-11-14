@@ -1,5 +1,5 @@
 ---
-title: "MAT381E-Week 7: Handling factors in data"
+title: "MAT381E-Week 7: Handling factors and dates in data"
 subtitle: ""
 author: "Gül İnan"
 institute: "Department of Mathematics<br/>Istanbul Technical University"
